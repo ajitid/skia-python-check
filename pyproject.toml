@@ -1,0 +1,13 @@
+[project]
+name = "pygletcheck"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "glfw>=2.9.0",
+    "pyglet>=2.1.3",
+    "pyopengl>=3.1.9",
+    "pysdl3>=0.9.7b9",
+    "skia-python>=87.8",
+]
