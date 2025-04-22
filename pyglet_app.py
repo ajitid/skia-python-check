@@ -1,11 +1,9 @@
 import skia
 import pyglet
-from pyglet.gl import *
-# import numpy as np
-# import ctypes
+from pyglet.gl import GL_RGBA8
 
 # Set up Pyglet window
-window = pyglet.window.Window(width=800, height=600, caption="Skia + Pyglet (GPU)")
+window = pyglet.window.Window(width=800, height=600, caption="Skia + Pyglet (GPU)", resizable=True)
 
 # Create Skia GPU context
 context = None
@@ -15,40 +13,49 @@ def init_skia():
     global context, surface
     # Create a GPU context using the current OpenGL context
     context = skia.GrDirectContext.MakeGL()
-    
-    # Set up the render target
-    info = skia.ImageInfo.MakeN32Premul(window.width, window.height)
-    
+    if not context:
+        # Alternatively I could've used `assert` or `raise RuntimeError`. See https://kyamagu.github.io/skia-python/tutorial/canvas.html#opengl-window
+        print("Failed to create Skia GrDirectContext")
+        return
+
     # Create framebuffer info for the current GL context
-    fbInfo = skia.GrGLFramebufferInfo()
-    fbInfo.fFBOID = 0  # Default framebuffer
-    fbInfo.fFormat = GL_RGBA8
-    
-    # Create backend render target
+    fbInfo = skia.GrGLFramebufferInfo(0, GL_RGBA8)
+
+    # Create backend render target wrapping the Pyglet window's framebuffer
     backendRT = skia.GrBackendRenderTarget(
-        window.width, window.height, 
-        1,  # sample count (0 or 1 for no multisampling)
-        8,  # stencil bits (typically 8)
+        window.width, window.height,
+        1,  # sample count (1 for no multisampling if using Skia >= m116, 0 otherwise)
+            # Pyglet's default window usually doesn't have MSAA unless requested.
+            # If you configure Pyglet for MSAA, match the sample count here.
+        0,  # stencil bits
         fbInfo
     )
-    
+
     # Create Skia surface that renders directly to the GL framebuffer
     surface = skia.Surface.MakeFromBackendRenderTarget(
-        context, 
+        context,
         backendRT,
         skia.kBottomLeft_GrSurfaceOrigin,
-        skia.kRGBA_8888_ColorType,
-        skia.ColorSpace.MakeSRGB()
+        skia.kRGBA_8888_ColorType,        # Match GL_RGBA8
+        skia.ColorSpace.MakeSRGB(),       # Common color space
+        # Optional: Surface properties
+        # skia.SurfaceProps(flags=skia.kDefault_SurfacePropsFlags)
     )
-    
+
     if not surface:
         print("Failed to create Skia surface")
+        # Clean up context if surface creation failed
+        context.abandonContext()
+        context = None
+        backendRT = None 
+        fbInfo = None
+    else:
+        print(f"Skia surface created ({window.width}x{window.height})")
+
 
 def cleanup_skia():
     global context, surface
-    if surface:
-        surface.delete()
-        surface = None
+    surface = None
     if context:
         context.abandonContext()
         context = None
@@ -56,72 +63,73 @@ def cleanup_skia():
 @window.event
 def on_draw():
     window.clear()
-    
+
     global context, surface
-    
+
     # Initialize Skia on first draw or if context is lost
     if surface is None:
         init_skia()
-    
+
     if surface:
         # Get canvas for drawing
         canvas = surface.getCanvas()
-        
-        # Clear with background color
+
+        # Clear Skia surface with a background color
         canvas.clear(skia.Color4f(0.9, 0.9, 0.9, 1.0))
-        
-        # Create paint objects
+
+        # --- Drawing commands ---
         paint = skia.Paint(
             AntiAlias=True,
-            Color=skia.Color(255, 0, 0),
+            Color=skia.ColorRED, # or skia.Color(255, 0, 0)
             StrokeWidth=4,
             Style=skia.Paint.kStroke_Style
         )
-        
+
         fill_paint = skia.Paint(
             AntiAlias=True,
             Color=skia.Color(0, 150, 255, 128),
             Style=skia.Paint.kFill_Style
         )
-        
+
         # Draw shapes
         canvas.drawCircle(400, 300, 100, paint)
         canvas.drawRect(skia.Rect(250, 200, 550, 400), fill_paint)
-        
+
         # Draw text
-        font = skia.Font(skia.Typeface(None), 24)
-        text_paint = skia.Paint(Color=skia.Color(0, 0, 255))
+        font = skia.Font(skia.Typeface(None), 24) # If you want to pass a typeface you'd use `skia.Typeface('Arial')` instead
+        text_paint = skia.Paint(Color=skia.Color(0, 0, 255)) # Skia by default enables anti-aliasing for text so we don't have to explicitly specify it
         canvas.drawString("Skia + Pyglet with GPU Acceleration", 200, 150, font, text_paint)
-        
+        # --- End Drawing ---
+
         # Flush drawing commands directly to the GL context
         surface.flushAndSubmit()  # Preferred over manual canvas.flush() + context.flush()
+
+    else:
+        # Handle case where Skia initialization failed
+        # (Could draw fallback text using Pyglet's labels if needed)
+        pass
 
 @window.event
 def on_resize(width, height):
     global surface
     # Release previous surface when window is resized
-    if surface:
-        surface.delete()
-        surface = None
+    surface = None
     return pyglet.event.EVENT_HANDLED
 
 @window.event
 def on_context_lost():
-    global surface, context
-    # Clean up resources when context is lost
+    print("OpenGL context lost!")
     cleanup_skia()
     return pyglet.event.EVENT_HANDLED
 
 @window.event
 def on_context_state_lost():
-    global surface, context
-    # Clean up resources when context state is lost
+    print("OpenGL context state lost!")
     cleanup_skia()
     return pyglet.event.EVENT_HANDLED
 
 @window.event
 def on_close():
-    # Clean up resources when window is closed
     cleanup_skia()
 
 # Start the application
