@@ -9,14 +9,15 @@ screen = display.get_default_screen()
 config = screen.get_best_config()
 # pyglet automatically sets 
 # - both major_version and minor_version to 3,
-# - depth_buffer to 1/True, and
+# - double_buffer on, and
 # - keeps multisampling (MSAA) off
 # so we won't set them manually
-config.depth_size = 0
+config.depth_size = 0 # would need a value for 3D (if you remove it to altogether, pyglet will default to 24)
 config.stencil_size = 8
 
 # Set up Pyglet window
 window = pyglet.window.Window(width=800, height=600, caption="Skia + Pyglet (GPU)", config=config, resizable=True)
+assert window.config.stencil_size == 8
 
 # Create Skia GPU context
 context = None
@@ -75,7 +76,16 @@ def cleanup_skia():
 
 @window.event
 def on_draw():
-    window.clear()
+    # Docs say to use `switch_to()`` if you have multiple windows. I don't have multiple windows,
+    # but still using if I introduce multiple windows later. See links in [this ticket](https://github.com/pyglet/pyglet/issues/726) 
+    # and see [this ticket](https://github.com/pyglet/pyglet/issues/1249) for more details. 
+    # The latter ticket mentions at several places, which [this Gemini response](https://gemini.google.com/share/0ac5b7150d96) does.
+    # Confirm if you'd also have to put `switch_to()` at several places as well.
+    window.switch_to() 
+    
+    gl.glClearColor(0.0, 0.0, 0.0, 1.0) # Only sets the color (to black). Doesn't clears by itself. Actual clearing happens when you use `gl.glClear()`
+    gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_STENCIL_BUFFER_BIT) # `| gl.GL_DEPTH_BUFFER_BIT` would be needed if you're doing 3D
+    # ^ Not using window.clear() because we're using gl.glClear() instead. But windows.clear() docs mention to use window.switch_to() before, which we're doing.
 
     global context, surface
 

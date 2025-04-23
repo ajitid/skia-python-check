@@ -30,7 +30,7 @@ def sdl_gl_window(title, width, height):
     # Enable double buffering
     sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_DOUBLEBUFFER, 1)
     # Set depth/stencil buffer sizes (stencil is important for Skia)
-    # Using 0 as Skia doesn't store depth info. If you're doign 3D rendering alongside Skia, then set it to 24 (or an appropriate value).
+    # Using 0 as Skia doesn't store depth info. If you're doing 3D rendering alongside Skia, then set it to 24 (or an appropriate value).
     sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_DEPTH_SIZE, 0)
     sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_STENCIL_SIZE, 8) # Skia needs stencil bits
 
@@ -151,7 +151,7 @@ def main():
                         # These OpenGL calls are outside Skia's drawing
                         # It's good practice to clear the OpenGL buffer before Skia draws
                         GL.glClearColor(0.0, 0.0, 0.0, 1.0) # Black background
-                        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_STENCIL_BUFFER_BIT)
+                        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_STENCIL_BUFFER_BIT) # `| gl.GL_DEPTH_BUFFER_BIT` would be needed if you're doing 3D 
 
                         # Get a Skia canvas to draw on
                         # 
