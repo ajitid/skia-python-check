@@ -18,6 +18,7 @@ config.stencil_size = 8
 # Set up Pyglet window
 window = pyglet.window.Window(width=800, height=600, caption="Skia + Pyglet (GPU)", config=config, resizable=True)
 assert window.config.stencil_size == 8
+fps_display = pyglet.window.FPSDisplay(window)
 
 # Create Skia GPU context
 context = None
@@ -115,6 +116,8 @@ def on_draw():
 
         # Flush drawing commands directly to the GL context
         surface.flushAndSubmit()  # Preferred over manual canvas.flush() + context.flush()
+
+        fps_display.draw()
 
     else:
         # Handle case where Skia initialization failed
