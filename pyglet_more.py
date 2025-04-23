@@ -1,1 +1,0 @@
-# Beside docs, there are examples in Pyglet's repo
