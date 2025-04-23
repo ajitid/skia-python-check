@@ -1,9 +1,22 @@
 import skia
 import pyglet
-from pyglet.gl import GL_RGBA8
+from pyglet import gl
+
+# taken from @/.venv/Lib/site-packages/pyglet/window/__init__.py
+# and from https://pyglet.readthedocs.io/en/latest/programming_guide/opengles.html
+display = pyglet.display.get_display()
+screen = display.get_default_screen()
+config = screen.get_best_config()
+# pyglet automatically sets 
+# - both major_version and minor_version to 3,
+# - depth_buffer to 1/True, and
+# - keeps multisampling (MSAA) off
+# so we won't set them manually
+config.depth_size = 0
+config.stencil_size = 8
 
 # Set up Pyglet window
-window = pyglet.window.Window(width=800, height=600, caption="Skia + Pyglet (GPU)", resizable=True)
+window = pyglet.window.Window(width=800, height=600, caption="Skia + Pyglet (GPU)", config=config, resizable=True)
 
 # Create Skia GPU context
 context = None
@@ -19,7 +32,7 @@ def init_skia():
         return
 
     # Create framebuffer info for the current GL context
-    fbInfo = skia.GrGLFramebufferInfo(0, GL_RGBA8)
+    fbInfo = skia.GrGLFramebufferInfo(0, gl.GL_RGBA8)
 
     # Create backend render target wrapping the Pyglet window's framebuffer
     backendRT = skia.GrBackendRenderTarget(
@@ -27,7 +40,7 @@ def init_skia():
         1,  # sample count (1 for no multisampling if using Skia >= m116, 0 otherwise)
             # Pyglet's default window usually doesn't have MSAA unless requested.
             # If you configure Pyglet for MSAA, match the sample count here.
-        0,  # stencil bits
+        8,  # stencil bits
         fbInfo
     )
 
