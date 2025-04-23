@@ -87,7 +87,7 @@ def on_draw():
         canvas = surface.getCanvas()
 
         # Clear Skia surface with a background color
-        canvas.clear(skia.Color4f(0.9, 0.9, 0.9, 1.0))
+        canvas.clear(skia.Color4f(0.0, 0.0, 0.0, 1.0))
 
         # --- Drawing commands ---
         paint = skia.Paint(
@@ -109,7 +109,7 @@ def on_draw():
 
         # Draw text
         font = skia.Font(skia.Typeface(None), 24) # If you want to pass a typeface you'd use `skia.Typeface('Arial')` instead
-        text_paint = skia.Paint(Color=skia.Color(0, 0, 255)) # Skia by default enables anti-aliasing for text so we don't have to explicitly specify it
+        text_paint = skia.Paint(Color=skia.Color(255, 255, 255)) # Skia by default enables anti-aliasing for text so we don't have to explicitly specify it
         canvas.drawString("Skia + Pyglet with GPU Acceleration", 200, 150, font, text_paint)
         # --- End Drawing ---
 
@@ -144,6 +144,5 @@ def on_context_state_lost():
 def on_close():
     cleanup_skia()
 
-# Start the application
 if __name__ == "__main__":
     pyglet.app.run()

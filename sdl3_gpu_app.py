@@ -3,6 +3,7 @@ import sdl3
 import skia
 from OpenGL import GL
 import ctypes
+import os
 
 WIDTH, HEIGHT = 640, 480
 WINDOW_TITLE = b"Skia + PySDL3 Example" # SDL requires bytes for titles
@@ -197,4 +198,5 @@ def main():
         print("Application finished.")
 
 if __name__ == '__main__':
+    os.environ["SDL_IGNORE_MISSING_FUNCTIONS"] = "1" # don't show warning about `Function 'SDL_SetRelativeMouseTransform' not found in binary: 'SDL3.dll'.`
     main()
